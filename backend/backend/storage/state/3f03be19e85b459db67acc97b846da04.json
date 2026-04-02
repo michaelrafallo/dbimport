@@ -1,0 +1,21 @@
+{
+  "status": "queued",
+  "message": "Upload received and waiting for worker",
+  "percent": 0.0,
+  "bytes_total": 0,
+  "bytes_processed": 0,
+  "parsed_queries": 0,
+  "executed_queries": 0,
+  "failed_queries": 0,
+  "skipped_queries": 0,
+  "eta_seconds": null,
+  "started_at": null,
+  "finished_at": null,
+  "heartbeat_at": 1774887615.0150628,
+  "stop_requested": false,
+  "log_file": "D:\\xampp\\htdocs\\ai\\dbimport\\backend\\backend\\storage\\logs\\3f03be19e85b459db67acc97b846da04.log",
+  "source_file": "D:\\xampp\\htdocs\\ai\\dbimport\\backend\\backend\\storage\\uploads\\d8f03da2f4404d1d8bac712f77fe5c62_a.sql",
+  "extracted_sql_file": "D:\\xampp\\htdocs\\ai\\dbimport\\backend\\backend\\storage\\uploads\\d8f03da2f4404d1d8bac712f77fe5c62_a.sql",
+  "error": null,
+  "meta": {}
+}

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MySQL Importer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-header">
+        <h1>MySQL Database Importer</h1>
+        <p class="subtle">Import large <code>.sql</code> and <code>.zip</code> dumps with live tracking.</p>
+      </header>
+
+      <div class="layout">
+        <div class="column column-left">
+          <section class="card" id="connectionSection">
+            <h2>Connection</h2>
+            <div class="grid">
+              <label>Host <input id="host" type="text" placeholder="127.0.0.1" /></label>
+              <label>Username <input id="username" type="text" placeholder="root" /></label>
+              <label>Password <input id="password" type="password" placeholder="••••••••" /></label>
+              <label id="databaseSelectWrap" class="hidden">Database
+                <select id="databaseSelect">
+                  <option value="">-- Select --</option>
+                </select>
+              </label>
+              <label id="databaseManualWrap" class="full hidden">Or manual DB name <input id="databaseManual" type="text" placeholder="my_database" /></label>
+            </div>
+            <div class="actions">
+              <button id="connectBtn" type="button">Connect</button>
+              <span id="connectStatus" class="subtle"></span>
+            </div>
+          </section>
+
+          <section class="card hidden" id="importSection">
+            <h2>Import</h2>
+            <label class="full file-upload-row">SQL/ZIP Dump <input id="fileInput" type="file" accept=".sql,.zip" /></label>
+            <div class="grid">
+              <label class="checkbox-row"><input id="stopOnError" type="checkbox" checked /> <span>Stop on error</span></label>
+              <label>Max errors <input id="maxErrors" type="number" value="100" min="1" max="10000" /></label>
+              <label class="checkbox-row"><input id="showQueryLogs" type="checkbox" /> <span>Log executed queries</span></label>
+              <label class="checkbox-row"><input id="resume" type="checkbox" /> <span>Resume from checkpoint</span></label>
+            </div>
+            <div class="actions">
+              <button id="importBtn" type="button">Import Database</button>
+              <button id="cancelBtn" type="button" class="danger">Cancel Import</button>
+              <button id="dropTablesBtn" type="button" class="danger">Drop Tables</button>
+              <button id="clearLogsBtn" type="button" class="danger">Clear Logs</button>
+              <button id="downloadLogsBtn" type="button">Download Logs</button>
+              <span id="importLoader" class="loader hidden">
+                <span class="spinner" aria-hidden="true"></span>
+                <span id="importLoaderText">Import is processing...</span>
+              </span>
+            </div>
+          </section>
+        </div>
+
+        <div class="column column-right">
+          <section class="card hidden" id="progressSection">
+            <h2>Progress</h2>
+            <div class="progress-wrap"><div id="progressBar"></div></div>
+            <div class="progress-meta">
+              <span id="metaPercent">0.00%</span>
+              <span id="metaQueries">parsed=0 executed=0 failed=0 skipped=0</span>
+              <span id="metaEta">ETA n/a</span>
+              <span id="metaElapsed">Elapsed n/a</span>
+              <span id="metaTotalEstimate">Total est n/a</span>
+            </div>
+            <div id="progressText" class="subtle">No active import.</div>
+            <div class="table-progress-wrap">
+              <h3>Table Import Status</h3>
+              <div id="tableProgressList" class="table-progress-list">
+                <div class="subtle">Waiting for table activity...</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card hidden" id="logsSection">
+            <h2>Live Logs</h2>
+            <ul id="taskChecklist" class="task-checklist">
+              <li id="taskUploading" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Uploading dump file</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskUpload" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Upload stored on server</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskSource" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">SQL source prepared</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskWorker" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Worker started</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskParse" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Parsing SQL statements</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskExecute" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Executing queries in batches</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskFinalize" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Finalizing import</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+              <li id="taskResult" class="task-item pending">
+                <div class="task-head">
+                  <span class="task-icon" aria-hidden="true"></span>
+                  <span class="task-label">Waiting for result</span>
+                </div>
+                <div class="task-progress"><div class="task-progress-bar"></div></div>
+              </li>
+            </ul>
+            <div id="logPanel" class="log-panel"></div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <dialog id="confirmModal">
+      <div class="modal-header">
+        <h3>Confirm Import</h3>
+        <p class="subtle">Review and continue</p>
+      </div>
+      <div class="modal-body">
+        <p>This will execute SQL statements against the selected database.</p>
+        <p class="subtle">Make sure your selected file and database are correct before continuing.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="dismissModalBtn" class="btn-secondary">Cancel</button>
+        <button id="confirmImportBtn">Start Import</button>
+      </div>
+    </dialog>
+
+    <dialog id="cancelConfirmModal">
+      <div class="modal-header">
+        <h3>Cancel Import</h3>
+        <p class="subtle">Stop current process</p>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to cancel the current import?</p>
+        <p class="subtle">This stops processing and marks the job as cancelled.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="dismissCancelModalBtn" class="btn-secondary">Keep Running</button>
+        <button id="confirmCancelBtn" class="danger">Yes, Cancel Import</button>
+      </div>
+    </dialog>
+
+    <dialog id="clearLogsConfirmModal">
+      <div class="modal-header">
+        <h3>Clear Import Logs and Files</h3>
+        <p class="subtle">Permanent cleanup</p>
+      </div>
+      <div class="modal-body">
+        <p>This will delete all import-generated files, session state, temporary files, and message logs.</p>
+        <p class="subtle">Database connection settings will not be cleared.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="dismissClearLogsModalBtn" class="btn-secondary">Cancel</button>
+        <button id="confirmClearLogsBtn" class="danger">Yes, Clear All</button>
+      </div>
+    </dialog>
+
+    <dialog id="dropTablesConfirmModal">
+      <div class="modal-header">
+        <h3>Drop All Tables</h3>
+        <p class="subtle">Dangerous action</p>
+      </div>
+      <div class="modal-body">
+        <p>This will permanently delete all tables in the selected database.</p>
+        <p class="subtle">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="dismissDropTablesModalBtn" class="btn-secondary">Cancel</button>
+        <button id="confirmDropTablesBtn" class="danger">Yes, Drop Tables</button>
+      </div>
+    </dialog>
+
+    <script src="/static/app.js"></script>
+    <div id="toastHost" class="toast-host" aria-live="polite" aria-atomic="true"></div>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      UPLOADS_DIR: /app/backend/storage/uploads
+      TEMP_DIR: /app/backend/storage/temp
+      LOGS_DIR: /app/backend/storage/logs
+      STATE_DIR: /app/backend/storage/state
+      IMPORT_BATCH_SIZE: 100
+      PARSER_CHUNK_SIZE: 1048576
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    volumes:
+      - ./backend/storage:/app/backend/storage
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: python -m app.workers.rq_worker
+    working_dir: /app/backend
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      UPLOADS_DIR: /app/backend/storage/uploads
+      TEMP_DIR: /app/backend/storage/temp
+      LOGS_DIR: /app/backend/storage/logs
+      STATE_DIR: /app/backend/storage/state
+      IMPORT_BATCH_SIZE: 100
+      PARSER_CHUNK_SIZE: 1048576
+    depends_on:
+      - redis
+    volumes:
+      - ./backend/storage:/app/backend/storage

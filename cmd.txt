@@ -1,0 +1,16 @@
+From your project root d:\xampp\htdocs\ai\dbimport, run:
+
+docker compose up --build
+Then open:
+
+http://127.0.0.1:8000
+If running locally (without full docker compose), run in 2 terminals:
+
+Terminal 1 (API)
+cd d:\xampp\htdocs\ai\dbimport
+python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
+
+Terminal 2 (worker)
+cd d:\xampp\htdocs\ai\dbimport\backend
+python -m app.workers.rq_worker
+And make sure Redis is running on localhost:6379.
